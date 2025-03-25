@@ -8,7 +8,8 @@ class MovingGradient extends HTMLElement {
   static get observedAttributes() {
     return [
       'text', 'heading-tag', 'font-family', 'font-size', 
-      'text-alignment', 'background-color', 'gradient-preset'
+      'text-alignment', 'background-color', 'gradient-preset', 
+      'gradient-type', 'animation-duration'
     ];
   }
 
@@ -52,7 +53,6 @@ class MovingGradient extends HTMLElement {
 
   getGradientColors(preset) {
     const presets = {
-      // 3-Color Presets
       'Teal Sunrise': ['#2A9D8F', '#E9C46A', '#F4A261'],
       'Berry Bliss': ['#9B1D64', '#D84797', '#F8A1D1'],
       'Citrus Burst': ['#F4A261', '#E76F51', '#FFD166'],
@@ -88,8 +88,6 @@ class MovingGradient extends HTMLElement {
       'Sapphire Glow': ['#000080', '#4169E1', '#87CEFA'],
       'Blush Fade': ['#FF9999', '#FFCC99', '#FFFF99'],
       'Neon Flash': ['#FF00FF', '#00FFFF', '#FFFF00'],
-
-      // 4-Color Presets
       'Ocean Breeze': ['#1A759F', '#34A0A4', '#76C893', '#B7E4C7'],
       'Sunset Glow': ['#FF6B6B', '#FF9F1C', '#FFD60A', '#FFEE88'],
       'Neon Pulse': ['#FF00FF', '#00FFFF', '#FF00FF', '#00FFFF'],
@@ -126,7 +124,7 @@ class MovingGradient extends HTMLElement {
       'Cool Breeze': ['#00A8CC', '#48C4D9', '#7ED4E6', '#B3E5FC'],
       'Warm Ember': ['#B22222', '#FF4500', '#FFA07A', '#FFDAB9']
     };
-    return presets[preset] || presets['Teal Sunrise']; // Default to Teal Sunrise
+    return presets[preset] || presets['Teal Sunrise'];
   }
 
   render() {
@@ -135,11 +133,45 @@ class MovingGradient extends HTMLElement {
     const fontFamily = this.getAttribute('font-family') || 'Lobster';
     const fontSize = parseFloat(this.getAttribute('font-size')) || 10; // In vw
     const textAlignment = this.getAttribute('text-alignment') || 'center';
-    const backgroundColor = this.getAttribute('background-color') || '#1B263B'; // Dark navy
+    const backgroundColor = this.getAttribute('background-color') || '#1B263B';
     const gradientPreset = this.getAttribute('gradient-preset') || 'Teal Sunrise';
+    const gradientType = this.getAttribute('gradient-type') || 'linear-gradient';
+    const animationDuration = parseFloat(this.getAttribute('animation-duration')) || 1; // In seconds
     const gradientColors = this.getGradientColors(gradientPreset);
 
     this.isAnimating = false;
+
+    // Configure gradient based on type
+    let initialGradient, midGradient;
+    switch (gradientType) {
+      case 'linear-gradient':
+        initialGradient = `linear-gradient(90deg, ${gradientColors.join(', ')})`;
+        midGradient = `linear-gradient(262deg, ${gradientColors.join(', ')})`;
+        break;
+      case 'radial-gradient':
+        initialGradient = `radial-gradient(circle, ${gradientColors.join(', ')})`;
+        midGradient = `radial-gradient(circle at 70% 30%, ${gradientColors.join(', ')})`;
+        break;
+      case 'conic-gradient':
+        initialGradient = `conic-gradient(from 0deg, ${gradientColors.join(', ')})`;
+        midGradient = `conic-gradient(from 180deg, ${gradientColors.join(', ')})`;
+        break;
+      case 'repeating-linear-gradient':
+        initialGradient = `repeating-linear-gradient(90deg, ${gradientColors.join(', ')} 0% 25%)`;
+        midGradient = `repeating-linear-gradient(262deg, ${gradientColors.join(', ')} 0% 25%)`;
+        break;
+      case 'repeating-radial-gradient':
+        initialGradient = `repeating-radial-gradient(circle, ${gradientColors.join(', ')} 0% 20%)`;
+        midGradient = `repeating-radial-gradient(circle at 70% 30%, ${gradientColors.join(', ')} 0% 20%)`;
+        break;
+      case 'repeating-conic-gradient':
+        initialGradient = `repeating-conic-gradient(from 0deg, ${gradientColors.join(', ')} 0deg 90deg)`;
+        midGradient = `repeating-conic-gradient(from 180deg, ${gradientColors.join(', ')} 0deg 90deg)`;
+        break;
+      default:
+        initialGradient = `linear-gradient(90deg, ${gradientColors.join(', ')})`;
+        midGradient = `linear-gradient(262deg, ${gradientColors.join(', ')})`;
+    }
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -156,19 +188,20 @@ class MovingGradient extends HTMLElement {
         }
 
         .gradient {
-          background-image: linear-gradient(90deg, ${gradientColors.join(', ')});
+          background-image: ${initialGradient};
           color: transparent;
           -webkit-background-clip: text;
+          background-clip: text;
           font-size: ${fontSize}vw;
           text-align: ${textAlignment};
-          animation: move 1s infinite;
+          animation: move ${animationDuration}s infinite;
           animation-play-state: paused;
           margin: 0;
         }
 
         @keyframes move {
           50% {
-            background-image: linear-gradient(262deg, ${gradientColors.join(', ')});
+            background-image: ${midGradient};
           }
         }
       </style>
